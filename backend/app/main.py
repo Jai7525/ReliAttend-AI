@@ -1,17 +1,18 @@
 """
 ReliAttend AI — Backend Application Entry Point
-FastAPI application initialization, middleware configuration, and router binding.
+FastAPI application initialization, middleware configuration, lifespan, and router binding.
 """
 
 from contextlib import asynccontextmanager
 import logging
 from typing import Any, Dict
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.core.exceptions import ReliAttendBaseException
+from app.database import init_db
 from app.routes import api_router
 
 # Configure structured logging
@@ -28,6 +29,12 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown routines."""
     logger.info("Starting %s v%s in %s mode", settings.APP_NAME, settings.APP_VERSION, settings.APP_ENV)
+    try:
+        init_db()
+        logger.info("Database initialized successfully (all tables verified).")
+    except Exception as exc:
+        logger.error("Database initialization failed: %s", exc)
+        raise exc
     yield
     logger.info("Shutting down %s", settings.APP_NAME)
 
@@ -80,4 +87,3 @@ async def root_health():
 
 # Include versioned API router (/api/v1/...)
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
-
