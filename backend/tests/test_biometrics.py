@@ -355,14 +355,14 @@ def test_positive_face_registration_flow_and_audit():
             )
             assert re_response.status_code == 201
 
-            # Check status again: 1 active reference maintained, student enrolled
+            # Check status again: 2 total references (1 superseded, 1 active)
             status_res2 = client.get(
                 f"/api/v1/biometrics/students/{STUDENT_A_ID}/status",
                 headers={"Authorization": f"Bearer {ADMIN_TOKEN}"},
             )
             assert status_res2.status_code == 200
             sdata2 = status_res2.json()
-            assert sdata2["reference_count"] == 1
+            assert sdata2["reference_count"] == 2
             assert sdata2["active_reference_count"] == 1
 
             # 4. Audit Log verification

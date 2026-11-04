@@ -34,30 +34,27 @@ ReliAttend AI is a Confidence-Aware Multi-Face Recognition and Reliability-Based
 - Enforces unique institutional ID institution-wide and unique roll number within a section.
 - Tracks active biometric consent.
 
-### 3.4 Biometric Enrolment & Feature Extraction Core (Phase 6)
+### 3.4 Multi-Reference Biometric Core (Phase 6 & Enhancement)
+- **1-to-Many Architecture:** Up to 5 natural angle references per student (`FaceReference` table with non-unique index on `student_id`).
+- **Pose Metadata:** Supported angle tags: `frontal`, `slight_left`, `slight_right`, `slight_up`, `slight_down`, `custom`.
 - **Detector:** OpenCV YuNet ONNX model (`face_detection_yunet_2023mar.onnx`, MIT License).
   - Strictly enforces **exactly 1 face** per reference image.
-  - Computes Laplacian blur variance ($\sigma^2$) and grayscale mean brightness on the cropped face region.
+  - Computes Laplacian blur variance ($\sigma^2 \ge 50.0$) and grayscale mean brightness ($40.0 \le \mu \le 220.0$) on cropped face.
 - **Recognizer:** OpenCV SFace ONNX model (`face_recognition_sface_2021dec.onnx`, Apache 2.0 License).
   - 5-point landmark face alignment (`alignCrop`).
   - Extracts 128-dimensional Float32 embeddings.
   - L2-normalization ensuring unit hypersphere representation ($\|v\|_2 = 1.0$).
   - Serialized to 512 bytes (`np.ndarray.tobytes()`).
-- **Replacement Policy:** One active reference per student. Re-registration updates the active record and safely removes superseded images from disk.
-- **Atomic Rollback:** Cleans up file artifacts if database transactions fail.
+- **Primary Reference Self-Healing:** Deleting the primary reference automatically promotes another active reference.
+- **Status Reversion:** Deleting the last active reference automatically reverts the student's status to `pending` and `is_enrolled = False`.
+- **Multi-Reference Recognition Pipeline:**
+  - Evaluates live camera frame $v_{\text{live}}$ against reference embeddings: $s_i = v_{\text{live}} \cdot r_i$.
+  - Best match: $S_{\text{final}} = \max(s_1, \dots, s_K)$.
+  - *Experimental Threshold:* $0.65$ cosine similarity (labeled experimental pending field benchmarking).
 
 ---
 
-## 4. Database ER Structure (Summary of Key Tables)
-- `users`: Core authentication identity.
-- `students`: Institutional student profiles.
-- `consent_records`: Biometric authorization audit records.
-- `face_references`: Encrypted/binary BLOB embeddings and reference image pointers.
-- `audit_logs`: Immutable security and operation audit trail.
-
----
-
-## 5. Docker Containerisation Architecture
+## 4. Docker Containerisation Architecture
 - **Base Image:** `python:3.13-slim-bookworm` (Official Debian minimal).
 - **Runtimes:** `libglib2.0-0`, `libgomp1` (required by OpenCV headless) and `curl` (container healthcheck).
 - **User Sandboxing:** Non-root execution via unprivileged `appuser` (UID 1000).
@@ -65,4 +62,3 @@ ReliAttend AI is a Confidence-Aware Multi-Face Recognition and Reliability-Based
   - `./backend/models:/app/models:ro`: Read-Only bind mount supplying ONNX model weights without baking them into image layers.
   - `reliattend-data`: Named persistent volume managing SQLite database and lock files.
   - `reliattend-storage`: Named persistent volume isolating sensitive face reference images.
-

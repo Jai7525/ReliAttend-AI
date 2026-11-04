@@ -622,6 +622,166 @@
               "path": ["biometrics", "students", "{{student_id}}", "status"]
             }
           }
+        },
+        {
+          "name": "9. Add Incremental Reference (Pose & Primary Flags)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.registration_id) {",
+                  "    pm.collectionVariables.set('last_reference_id', jsonData.registration_id.toString());",
+                  "    console.log('Saved last_reference_id:', jsonData.registration_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select natural face angle: frontal, slight_left, slight_right, slight_up, slight_down"
+                },
+                {
+                  "key": "pose_label",
+                  "value": "slight_left",
+                  "type": "text",
+                  "description": "Allowed: frontal, slight_left, slight_right, slight_up, slight_down, custom"
+                },
+                {
+                  "key": "is_primary",
+                  "value": "false",
+                  "type": "text",
+                  "description": "true or false"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/references",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "references"]
+            }
+          }
+        },
+        {
+          "name": "10. List Student References (Zero Leaks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Zero sensitive file paths or raw embeddings exposed', function () {",
+                  "    pm.expect(JSON.stringify(jsonData)).to.not.include('image_path');",
+                  "    pm.expect(JSON.stringify(jsonData)).to.not.include('embedding');",
+                  "});",
+                  "if (jsonData && jsonData.references && jsonData.references.length > 0) {",
+                  "    pm.collectionVariables.set('last_reference_id', jsonData.references[0].reference_id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/references",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "references"]
+            }
+          }
+        },
+        {
+          "name": "11. Delete Reference (Self-Healing Primary Promotion)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/references/{{last_reference_id}}",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "references", "{{last_reference_id}}"]
+            }
+          }
+        },
+        {
+          "name": "12. Sixth Reference Limit Check (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict when limit exceeded', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Fails when student already has 5 active references"
+                },
+                {
+                  "key": "pose_label",
+                  "value": "custom",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/references",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "references"]
+            }
+          }
         }
       ]
     }

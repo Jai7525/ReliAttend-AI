@@ -51,6 +51,21 @@ class Settings(BaseSettings):
     BIOMETRIC_MIN_BRIGHTNESS: float = 40.0  # Minimum average grayscale pixel value
     BIOMETRIC_MAX_BRIGHTNESS: float = 220.0  # Maximum average grayscale pixel value
 
+    # Multi-Reference Enrollment Settings (Phase 6 Enhancement)
+    BIOMETRIC_MAX_ACTIVE_REFERENCES: int = 5
+    BIOMETRIC_MIN_ACTIVE_REFERENCES: int = 1
+    BIOMETRIC_ALLOWED_POSES: List[str] = [
+        "frontal",
+        "slight_left",
+        "slight_right",
+        "slight_up",
+        "slight_down",
+        "custom",
+    ]
+    # Experimental similarity threshold for SFace multi-reference cosine matching
+    # (Treated as experimental; not a finalized or hardcoded production threshold)
+    BIOMETRIC_EXPERIMENTAL_MATCH_THRESHOLD: float = 0.65
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

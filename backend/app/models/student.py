@@ -48,9 +48,23 @@ class Student(Base):
     # Relationships
     class_section = relationship("ClassSection", back_populates="students")
     consent_record = relationship("ConsentRecord", back_populates="student", uselist=False, cascade="all, delete-orphan")
-    face_reference = relationship("FaceReference", back_populates="student", uselist=False, cascade="all, delete-orphan")
+    face_references = relationship("FaceReference", back_populates="student", cascade="all, delete-orphan", order_by="FaceReference.enrolled_at.desc()")
     attendance_records = relationship("AttendanceRecord", back_populates="student")
     detection_evidences = relationship("DetectionEvidence", back_populates="candidate_student")
+
+    @property
+    def face_reference(self):
+        """
+        Backward-compatibility property returning the latest active reference
+        or primary reference, if any.
+        """
+        if not self.face_references:
+            return None
+        active = [r for r in self.face_references if r.status == "active"]
+        if not active:
+            return None
+        primary = [r for r in active if r.is_primary]
+        return primary[0] if primary else active[0]
 
 
 class ConsentRecord(Base):
@@ -81,19 +95,21 @@ class FaceReference(Base):
     """
     Sensitive Biometric Face Reference (BR-017, BR-019, FR-STU-005):
     Stores face embeddings as binary BLOB (LargeBinary) and points to protected reference images.
-    Always maintains model name, model version, and quality score.
+    Supports up to 5 natural angle references per student (Phase 6 Enhancement).
     """
     __tablename__ = "face_references"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), unique=True, nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), index=True, nullable=False)
     image_path = Column(String(500), nullable=False)  # Secure storage path
-    embedding = Column(LargeBinary, nullable=False)  # Serialized numpy float array
-    embedding_size = Column(Integer, default=512, nullable=False)
-    model_name = Column(String(100), default="insightface_buffalo_l", nullable=False)
-    model_version = Column(String(50), default="1.0", nullable=False)
-    quality_score = Column(Float, nullable=True)  # Quality score at time of enrollment
-    status = Column(String(20), default="active", nullable=False)  # active, deactivated, deleted
+    embedding = Column(LargeBinary, nullable=False)  # Serialized numpy float array (128-d float32)
+    embedding_size = Column(Integer, default=128, nullable=False)
+    model_name = Column(String(100), default="opencv_sface", nullable=False)
+    model_version = Column(String(50), default="2021dec", nullable=False)
+    quality_score = Column(Float, nullable=True)  # Detection confidence at enrollment
+    pose_label = Column(String(50), default="frontal", nullable=False)  # frontal, slight_left, slight_right, slight_up, slight_down, custom
+    is_primary = Column(Boolean, default=False, nullable=False)  # Primary reference indicator
+    status = Column(String(20), default="active", nullable=False)  # active, deactivated, superseded, deleted
     enrolled_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -103,6 +119,6 @@ class FaceReference(Base):
     deactivated_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    student = relationship("Student", back_populates="face_reference")
+    student = relationship("Student", back_populates="face_references")
     enroller = relationship("User")
 

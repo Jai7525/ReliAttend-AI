@@ -42,8 +42,10 @@ from app.schemas.student import (
 
 from app.schemas.biometrics import (
     QualityMetricsResponse,
+    FaceReferenceItemResponse,
     FaceRegistrationResponse,
     FaceRegistrationStatusResponse,
+    StudentReferenceListResponse,
 )
 
 __all__ = [
