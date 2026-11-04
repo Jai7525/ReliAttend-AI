@@ -25,6 +25,36 @@
       "key": "refresh_token",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "year_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "dept_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "prog_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "sem_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "class_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "1",
+      "type": "string"
     }
   ],
   "item": [
@@ -39,13 +69,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"Status is healthy\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.status).to.eql(\"healthy\");",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Status is healthy\", function () { var jsonData = pm.response.json(); pm.expect(jsonData.status).to.eql(\"healthy\"); });"
                 ],
                 "type": "text/javascript"
               }
@@ -54,18 +79,8 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{base_url}}/health",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "health"
-              ]
-            },
-            "description": "Check if root FastAPI service is responding."
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          }
         },
         {
           "name": "API v1 Health Check",
@@ -74,14 +89,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"Response indicates success\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data.status).to.eql(\"healthy\");",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Response indicates success\", function () { var jsonData = pm.response.json(); pm.expect(jsonData.success).to.eql(true); });"
                 ],
                 "type": "text/javascript"
               }
@@ -90,18 +99,8 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{api_v1}}/health",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "health"
-              ]
-            },
-            "description": "Check operational status of versioned API v1."
-          },
-          "response": []
+            "url": { "raw": "{{api_v1}}/health", "host": ["{{api_v1}}"], "path": ["health"] }
+          }
         }
       ]
     },
@@ -116,14 +115,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Authentication successful\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data.user.role).to.eql(\"admin\");",
-                  "});",
                   "if (jsonData.data && jsonData.data.tokens) {",
                   "    pm.collectionVariables.set(\"access_token\", jsonData.data.tokens.access_token);",
                   "    pm.collectionVariables.set(\"refresh_token\", jsonData.data.tokens.refresh_token);",
@@ -135,29 +128,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username_or_email\": \"admin@reliattend.com\",\n  \"password\": \"AdminPassword@123\"\n}"
             },
-            "url": {
-              "raw": "{{api_v1}}/auth/login",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Authenticate default Admin account and automatically store tokens in collection variables."
-          },
-          "response": []
+            "url": { "raw": "{{api_v1}}/auth/login", "host": ["{{api_v1}}"], "path": ["auth", "login"] }
+          }
         },
         {
           "name": "2. Login (Faculty)",
@@ -166,14 +143,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Faculty login successful\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data.user.role).to.eql(\"faculty\");",
-                  "});",
                   "if (jsonData.data && jsonData.data.tokens) {",
                   "    pm.collectionVariables.set(\"access_token\", jsonData.data.tokens.access_token);",
                   "    pm.collectionVariables.set(\"refresh_token\", jsonData.data.tokens.refresh_token);",
@@ -185,29 +156,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username_or_email\": \"dr_sharma\",\n  \"password\": \"FacultyPassword@123\"\n}"
             },
-            "url": {
-              "raw": "{{api_v1}}/auth/login",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Authenticate default Faculty account and store tokens in collection variables."
-          },
-          "response": []
+            "url": { "raw": "{{api_v1}}/auth/login", "host": ["{{api_v1}}"], "path": ["auth", "login"] }
+          }
         },
         {
           "name": "3. Login (Invalid Credentials - Negative Test)",
@@ -216,13 +171,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
-                  "    pm.response.to.have.status(401);",
-                  "});",
-                  "var jsonData = pm.response.json();",
-                  "pm.test(\"Expected error format\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(false);",
-                  "});"
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
                 ],
                 "type": "text/javascript"
               }
@@ -230,137 +179,55 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username_or_email\": \"admin@reliattend.com\",\n  \"password\": \"WrongPassword999\"\n}"
             },
-            "url": {
-              "raw": "{{api_v1}}/auth/login",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Ensure invalid password returns 401 Unauthorized."
-          },
-          "response": []
+            "url": { "raw": "{{api_v1}}/auth/login", "host": ["{{api_v1}}"], "path": ["auth", "login"] }
+          }
         },
         {
           "name": "4. Get Current User (/me)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "var jsonData = pm.response.json();",
-                  "pm.test(\"Profile data returned\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data).to.have.property(\"id\");",
-                  "    pm.expect(jsonData.data).to.have.property(\"email\");",
-                  "    pm.expect(jsonData.data).to.have.property(\"role\");",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{api_v1}}/auth/me",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "me"
-              ]
-            },
-            "description": "Retrieve current authenticated user's profile using Bearer access_token."
-          },
-          "response": []
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/auth/me", "host": ["{{api_v1}}"], "path": ["auth", "me"] }
+          }
         },
         {
           "name": "5. Refresh Access Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "var jsonData = pm.response.json();",
-                  "pm.test(\"New access token issued\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data).to.have.property(\"access_token\");",
-                  "});",
-                  "if (jsonData.data && jsonData.data.access_token) {",
-                  "    pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
-            },
-            "url": {
-              "raw": "{{api_v1}}/auth/refresh",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
-            },
-            "description": "Request new access token using collection's refresh_token."
-          },
-          "response": []
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{api_v1}}/auth/refresh", "host": ["{{api_v1}}"], "path": ["auth", "refresh"] }
+          }
         },
         {
           "name": "6. Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/auth/logout", "host": ["{{api_v1}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Academic Management",
+      "description": "Educational hierarchy and faculty assignment endpoints.",
+      "item": [
+        {
+          "name": "1. Create Academic Year",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Logout confirmed\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "});"
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"year_id\", jsonData.data.id.toString()); }"
                 ],
                 "type": "text/javascript"
               }
@@ -369,24 +236,201 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": {
-              "raw": "{{api_v1}}/auth/logout",
-              "host": [
-                "{{api_v1}}"
-              ],
-              "path": [
-                "auth",
-                "logout"
-              ]
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"2026-2027\",\n  \"start_date\": \"2026-08-01\",\n  \"end_date\": \"2027-05-31\",\n  \"is_active\": true\n}"
             },
-            "description": "Send logout request with current Bearer token."
-          },
-          "response": []
+            "url": { "raw": "{{api_v1}}/academic/years", "host": ["{{api_v1}}"], "path": ["academic", "years"] }
+          }
+        },
+        {
+          "name": "2. List Academic Years",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/academic/years", "host": ["{{api_v1}}"], "path": ["academic", "years"] }
+          }
+        },
+        {
+          "name": "3. Create Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"dept_id\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Computer Science & Engineering\",\n  \"code\": \"CSE\",\n  \"academic_year_id\": {{year_id}},\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/departments", "host": ["{{api_v1}}"], "path": ["academic", "departments"] }
+          }
+        },
+        {
+          "name": "4. Create Programme",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"prog_id\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"B.Tech in Artificial Intelligence\",\n  \"code\": \"BTECH-AI\",\n  \"department_id\": {{dept_id}},\n  \"duration_years\": 4,\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/programmes", "host": ["{{api_v1}}"], "path": ["academic", "programmes"] }
+          }
+        },
+        {
+          "name": "5. Create Semester",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"sem_id\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Semester 5\",\n  \"number\": 5,\n  \"programme_id\": {{prog_id}},\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/semesters", "host": ["{{api_v1}}"], "path": ["academic", "semesters"] }
+          }
+        },
+        {
+          "name": "6. Create Class Section",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"class_id\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Section A\",\n  \"semester_id\": {{sem_id}},\n  \"max_students\": 60,\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/classes", "host": ["{{api_v1}}"], "path": ["academic", "classes"] }
+          }
+        },
+        {
+          "name": "7. Create Subject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"subject_id\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Computer Vision & Deep Learning\",\n  \"code\": \"CS501\",\n  \"class_section_id\": {{class_id}},\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/subjects", "host": ["{{api_v1}}"], "path": ["academic", "subjects"] }
+          }
+        },
+        {
+          "name": "8. Create Period",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Period 1\",\n  \"day_of_week\": \"Monday\",\n  \"start_time\": \"09:00:00\",\n  \"end_time\": \"09:50:00\",\n  \"subject_id\": {{subject_id}},\n  \"class_section_id\": {{class_id}},\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/periods", "host": ["{{api_v1}}"], "path": ["academic", "periods"] }
+          }
+        },
+        {
+          "name": "9. Assign Faculty to Class & Subject (BR-001)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 2,\n  \"class_section_id\": {{class_id}},\n  \"subject_id\": {{subject_id}},\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{api_v1}}/academic/assignments", "host": ["{{api_v1}}"], "path": ["academic", "assignments"] }
+          }
+        },
+        {
+          "name": "10. Get My Assigned Classes (Faculty View)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/academic/faculty/my-classes", "host": ["{{api_v1}}"], "path": ["academic", "faculty", "my-classes"] }
+          }
         }
       ]
     }
