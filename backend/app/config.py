@@ -38,6 +38,19 @@ class Settings(BaseSettings):
     # Storage Paths
     STORAGE_PATH: str = "./storage"
 
+    # Biometric Image & Face Processing Settings (Phase 6)
+    # Note: Quality thresholds are initial experimental defaults, fully configurable
+    BIOMETRIC_MAX_UPLOAD_BYTES: int = 5 * 1024 * 1024  # 5 MB limit
+    BIOMETRIC_ALLOWED_MIME_TYPES: List[str] = ["image/jpeg", "image/png"]
+    BIOMETRIC_MODELS_DIR: str = "./backend/models"
+    BIOMETRIC_STORAGE_DIR: str = "./storage/reference_images"
+    BIOMETRIC_YUNET_CONFIDENCE_THRESHOLD: float = 0.85
+    BIOMETRIC_MIN_FACE_WIDTH: int = 80
+    BIOMETRIC_MIN_FACE_HEIGHT: int = 80
+    BIOMETRIC_BLUR_THRESHOLD: float = 50.0  # Minimum Laplacian variance
+    BIOMETRIC_MIN_BRIGHTNESS: float = 40.0  # Minimum average grayscale pixel value
+    BIOMETRIC_MAX_BRIGHTNESS: float = 220.0  # Maximum average grayscale pixel value
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -40,6 +40,12 @@ from app.schemas.student import (
     ConsentRecordResponse,
 )
 
+from app.schemas.biometrics import (
+    QualityMetricsResponse,
+    FaceRegistrationResponse,
+    FaceRegistrationStatusResponse,
+)
+
 __all__ = [
     "LoginRequest",
     "RefreshTokenRequest",

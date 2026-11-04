@@ -22,6 +22,9 @@ ENV/
 # Protected Biometric Storage & Local Files
 storage/*
 !storage/.gitkeep
+backend/models/*.onnx
+backend/models/*.bin
+!backend/models/.gitkeep
 
 # Local Test Data & Frames
 test_data/*

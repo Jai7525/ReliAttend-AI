@@ -452,6 +452,178 @@
           }
         }
       ]
+    },
+    {
+      "name": "04 - Biometric Registration (Phase 6)",
+      "item": [
+        {
+          "name": "1. Check Status - Unenrolled Student (200 OK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/status",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "2. Register Reference Face (201 Created)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a JPEG or PNG reference face photo with exactly 1 clear face"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/register-face",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "register-face"]
+            }
+          }
+        },
+        {
+          "name": "3. Register Face - Missing Consent (403 Forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Attempts face registration on a student without an active consent record"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/STU_NOCONSENT_999/register-face",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "STU_NOCONSENT_999", "register-face"]
+            }
+          }
+        },
+        {
+          "name": "4. Register Face - Unknown Student (404 Not Found)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/UNKNOWN_STUDENT_ID/register-face",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "UNKNOWN_STUDENT_ID", "register-face"]
+            }
+          }
+        },
+        {
+          "name": "5. Register Face - Corrupt / Non-Image File (400 Bad Request)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload a .txt or corrupt file pretending to be an image"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/register-face",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "register-face"]
+            }
+          }
+        },
+        {
+          "name": "6. Register Face - Zero Faces Detected (422 Unprocessable)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload an image of a blank background, book, or vehicle"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/register-face",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "register-face"]
+            }
+          }
+        },
+        {
+          "name": "7. Check Status - Enrolled Student (200 OK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/status",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "8. Faculty Cross-Class Authorization Check (403 Forbidden)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Description", "value": "When authenticated as a Faculty member not assigned to this student's class" }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/biometrics/students/{{student_id}}/status",
+              "host": ["{{api_v1}}"],
+              "path": ["biometrics", "students", "{{student_id}}", "status"]
+            }
+          }
+        }
+      ]
     }
   ]
 }
