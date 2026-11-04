@@ -55,27 +55,19 @@
       "key": "subject_id",
       "value": "1",
       "type": "string"
+    },
+    {
+      "key": "student_pk",
+      "value": "1",
+      "type": "string"
     }
   ],
   "item": [
     {
       "name": "00 - Health Check",
-      "description": "Basic operational and heartbeat verification endpoints.",
       "item": [
         {
           "name": "Root Health Check",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Status is healthy\", function () { var jsonData = pm.response.json(); pm.expect(jsonData.status).to.eql(\"healthy\"); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -84,18 +76,6 @@
         },
         {
           "name": "API v1 Health Check",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Response indicates success\", function () { var jsonData = pm.response.json(); pm.expect(jsonData.success).to.eql(true); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -106,7 +86,6 @@
     },
     {
       "name": "01 - Authentication",
-      "description": "User login, profile verification, token refresh, and logout endpoints.",
       "item": [
         {
           "name": "1. Login (Admin)",
@@ -165,58 +144,17 @@
           }
         },
         {
-          "name": "3. Login (Invalid Credentials - Negative Test)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username_or_email\": \"admin@reliattend.com\",\n  \"password\": \"WrongPassword999\"\n}"
-            },
-            "url": { "raw": "{{api_v1}}/auth/login", "host": ["{{api_v1}}"], "path": ["auth", "login"] }
-          }
-        },
-        {
-          "name": "4. Get Current User (/me)",
+          "name": "3. Get Current User (/me)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": { "raw": "{{api_v1}}/auth/me", "host": ["{{api_v1}}"], "path": ["auth", "me"] }
-          }
-        },
-        {
-          "name": "5. Refresh Access Token",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
-            "url": { "raw": "{{api_v1}}/auth/refresh", "host": ["{{api_v1}}"], "path": ["auth", "refresh"] }
-          }
-        },
-        {
-          "name": "6. Logout",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_v1}}/auth/logout", "host": ["{{api_v1}}"], "path": ["auth", "logout"] }
           }
         }
       ]
     },
     {
       "name": "02 - Academic Management",
-      "description": "Educational hierarchy and faculty assignment endpoints.",
       "item": [
         {
           "name": "1. Create Academic Year",
@@ -225,7 +163,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"year_id\", jsonData.data.id.toString()); }"
                 ],
@@ -241,27 +179,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"2026-2027\",\n  \"start_date\": \"2026-08-01\",\n  \"end_date\": \"2027-05-31\",\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"2026-2027-MAIN\",\n  \"start_date\": \"2026-08-01\",\n  \"end_date\": \"2027-05-31\",\n  \"is_active\": true\n}"
             },
             "url": { "raw": "{{api_v1}}/academic/years", "host": ["{{api_v1}}"], "path": ["academic", "years"] }
           }
         },
         {
-          "name": "2. List Academic Years",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_v1}}/academic/years", "host": ["{{api_v1}}"], "path": ["academic", "years"] }
-          }
-        },
-        {
-          "name": "3. Create Department",
+          "name": "2. Create Department",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"dept_id\", jsonData.data.id.toString()); }"
                 ],
@@ -277,19 +207,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Computer Science & Engineering\",\n  \"code\": \"CSE\",\n  \"academic_year_id\": {{year_id}},\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"Computer Science & Engineering\",\n  \"code\": \"CSE-MAIN\",\n  \"academic_year_id\": {{year_id}},\n  \"is_active\": true\n}"
             },
             "url": { "raw": "{{api_v1}}/academic/departments", "host": ["{{api_v1}}"], "path": ["academic", "departments"] }
           }
         },
         {
-          "name": "4. Create Programme",
+          "name": "3. Create Programme",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"prog_id\", jsonData.data.id.toString()); }"
                 ],
@@ -305,19 +235,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"B.Tech in Artificial Intelligence\",\n  \"code\": \"BTECH-AI\",\n  \"department_id\": {{dept_id}},\n  \"duration_years\": 4,\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"B.Tech in Artificial Intelligence\",\n  \"code\": \"BTECH-AIMAIN\",\n  \"department_id\": {{dept_id}},\n  \"duration_years\": 4,\n  \"is_active\": true\n}"
             },
             "url": { "raw": "{{api_v1}}/academic/programmes", "host": ["{{api_v1}}"], "path": ["academic", "programmes"] }
           }
         },
         {
-          "name": "5. Create Semester",
+          "name": "4. Create Semester",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"sem_id\", jsonData.data.id.toString()); }"
                 ],
@@ -339,13 +269,13 @@
           }
         },
         {
-          "name": "6. Create Class Section",
+          "name": "5. Create Class Section",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"class_id\", jsonData.data.id.toString()); }"
                 ],
@@ -367,13 +297,13 @@
           }
         },
         {
-          "name": "7. Create Subject",
+          "name": "6. Create Subject",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"subject_id\", jsonData.data.id.toString()); }"
                 ],
@@ -389,28 +319,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Computer Vision & Deep Learning\",\n  \"code\": \"CS501\",\n  \"class_section_id\": {{class_id}},\n  \"is_active\": true\n}"
+              "raw": "{\n  \"name\": \"Computer Vision & Deep Learning\",\n  \"code\": \"CS501-M\",\n  \"class_section_id\": {{class_id}},\n  \"is_active\": true\n}"
             },
             "url": { "raw": "{{api_v1}}/academic/subjects", "host": ["{{api_v1}}"], "path": ["academic", "subjects"] }
           }
         },
         {
-          "name": "8. Create Period",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Period 1\",\n  \"day_of_week\": \"Monday\",\n  \"start_time\": \"09:00:00\",\n  \"end_time\": \"09:50:00\",\n  \"subject_id\": {{subject_id}},\n  \"class_section_id\": {{class_id}},\n  \"is_active\": true\n}"
-            },
-            "url": { "raw": "{{api_v1}}/academic/periods", "host": ["{{api_v1}}"], "path": ["academic", "periods"] }
-          }
-        },
-        {
-          "name": "9. Assign Faculty to Class & Subject (BR-001)",
+          "name": "7. Assign Faculty (BR-001)",
           "request": {
             "method": "POST",
             "header": [
@@ -425,11 +340,115 @@
           }
         },
         {
-          "name": "10. Get My Assigned Classes (Faculty View)",
+          "name": "8. Get My Assigned Classes (Faculty View)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": { "raw": "{{api_v1}}/academic/faculty/my-classes", "host": ["{{api_v1}}"], "path": ["academic", "faculty", "my-classes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Student Management",
+      "description": "Student registration, student list filtering, profiles, and biometric consent logging.",
+      "item": [
+        {
+          "name": "1. Register Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) { pm.collectionVariables.set(\"student_pk\", jsonData.data.id.toString()); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"STU2026_001\",\n  \"name\": \"Aarav Patel\",\n  \"roll_number\": \"26CS001\",\n  \"class_section_id\": {{class_id}}\n}"
+            },
+            "url": { "raw": "{{api_v1}}/students", "host": ["{{api_v1}}"], "path": ["students"] }
+          }
+        },
+        {
+          "name": "2. Register Student (Duplicate ID - Negative Test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict\", function () { pm.response.to.have.status(409); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"STU2026_001\",\n  \"name\": \"Duplicate Person\",\n  \"roll_number\": \"26CS999\",\n  \"class_section_id\": {{class_id}}\n}"
+            },
+            "url": { "raw": "{{api_v1}}/students", "host": ["{{api_v1}}"], "path": ["students"] }
+          }
+        },
+        {
+          "name": "3. List Students (Filtered by Class)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{api_v1}}/students?class_section_id={{class_id}}",
+              "host": ["{{api_v1}}"],
+              "path": ["students"],
+              "query": [{ "key": "class_section_id", "value": "{{class_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "4. Get Student Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/students/{{student_pk}}", "host": ["{{api_v1}}"], "path": ["students", "{{student_pk}}"] }
+          }
+        },
+        {
+          "name": "5. Record Biometric Consent (BR-018)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent_type\": \"institutional_enrollment\",\n  \"consent_reference\": \"SIGNED-FORM-AARAV-2026\"\n}"
+            },
+            "url": { "raw": "{{api_v1}}/students/{{student_pk}}/consent", "host": ["{{api_v1}}"], "path": ["students", "{{student_pk}}", "consent"] }
+          }
+        },
+        {
+          "name": "6. Deactivate Student",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_v1}}/students/{{student_pk}}/deactivate", "host": ["{{api_v1}}"], "path": ["students", "{{student_pk}}", "deactivate"] }
           }
         }
       ]

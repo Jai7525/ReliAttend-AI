@@ -32,6 +32,14 @@ from app.schemas.academic import (
     AssignedClassDetail,
 )
 
+from app.schemas.student import (
+    StudentCreate,
+    StudentUpdate,
+    StudentResponse,
+    ConsentRecordCreate,
+    ConsentRecordResponse,
+)
+
 __all__ = [
     "LoginRequest",
     "RefreshTokenRequest",
@@ -57,4 +65,9 @@ __all__ = [
     "FacultyAssignmentCreate",
     "FacultyAssignmentResponse",
     "AssignedClassDetail",
+    "StudentCreate",
+    "StudentUpdate",
+    "StudentResponse",
+    "ConsentRecordCreate",
+    "ConsentRecordResponse",
 ]
