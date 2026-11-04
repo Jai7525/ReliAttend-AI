@@ -1,0 +1,48 @@
+# Python Bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables & Secrets (CRITICAL: Never commit .env)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Protected Biometric Storage & Local Files
+storage/*
+!storage/.gitkeep
+
+# Local Test Data & Frames
+test_data/*
+!test_data/.gitkeep
+
+# Database Files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs
+*.log
+logs/
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
