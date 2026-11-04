@@ -54,3 +54,15 @@ ReliAttend AI is a Confidence-Aware Multi-Face Recognition and Reliability-Based
 - `consent_records`: Biometric authorization audit records.
 - `face_references`: Encrypted/binary BLOB embeddings and reference image pointers.
 - `audit_logs`: Immutable security and operation audit trail.
+
+---
+
+## 5. Docker Containerisation Architecture
+- **Base Image:** `python:3.13-slim-bookworm` (Official Debian minimal).
+- **Runtimes:** `libglib2.0-0`, `libgomp1` (required by OpenCV headless) and `curl` (container healthcheck).
+- **User Sandboxing:** Non-root execution via unprivileged `appuser` (UID 1000).
+- **Volume Mounts:**
+  - `./backend/models:/app/models:ro`: Read-Only bind mount supplying ONNX model weights without baking them into image layers.
+  - `reliattend-data`: Named persistent volume managing SQLite database and lock files.
+  - `reliattend-storage`: Named persistent volume isolating sensitive face reference images.
+

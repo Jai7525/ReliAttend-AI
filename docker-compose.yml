@@ -1,0 +1,52 @@
+# ==============================================================================
+# ReliAttend AI — Docker Compose Orchestration
+# Manages backend container, volume isolation, and host port forwarding.
+# ==============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reliattend-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=ReliAttend AI Backend
+      - APP_ENV=production
+      - DEBUG=False
+      - HOST=0.0.0.0
+      - PORT=8000
+      - API_V1_PREFIX=/api/v1
+      - DATABASE_URL=sqlite:////app/data/reliattend.db
+      - STORAGE_PATH=/app/storage
+      - BIOMETRIC_MODELS_DIR=/app/models
+      - BIOMETRIC_STORAGE_DIR=/app/storage/reference_images
+      - BIOMETRIC_MAX_UPLOAD_BYTES=5242880
+      - BIOMETRIC_YUNET_CONFIDENCE_THRESHOLD=0.85
+      - BIOMETRIC_MIN_FACE_WIDTH=80
+      - BIOMETRIC_MIN_FACE_HEIGHT=80
+      - BIOMETRIC_BLUR_THRESHOLD=50.0
+      - BIOMETRIC_MIN_BRIGHTNESS=40.0
+      - BIOMETRIC_MAX_BRIGHTNESS=220.0
+    volumes:
+      # 1. Models: Read-Only bind mount (Provides host weights safely without copying into Docker image)
+      - ./backend/models:/app/models:ro
+      # 2. Database: Dedicated persistent volume for SQLite database
+      - reliattend-data:/app/data
+      # 3. Biometric Images: Dedicated persistent volume for reference faces
+      - reliattend-storage:/app/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  reliattend-data:
+    name: reliattend_data
+  reliattend-storage:
+    name: reliattend_storage
+

@@ -1,0 +1,53 @@
+# Git & Version Control
+.git
+.gitignore
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+
+# Protected Biometric Storage & Data
+storage/*
+!storage/.gitkeep
+test_data/*
+!test_data/.gitkeep
+
+# Database Files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs
+*.log
+logs/
+
+# Model Binaries
+backend/models/*.onnx
+backend/models/*.bin
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+

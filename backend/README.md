@@ -114,3 +114,33 @@ Every uploaded reference image must satisfy:
 # Run complete pytest test suite
 pytest -v --tb=short
 ```
+
+---
+
+## 5. Docker Containerisation
+
+The backend can be built and executed in an isolated, production-grade Linux container:
+
+```bash
+# 1. Build backend image
+docker compose build
+
+# 2. Start container in detached mode
+docker compose up -d
+
+# 3. View live logs
+docker compose logs -f backend
+
+# 4. Run automated test suite inside Docker
+docker compose exec backend pytest -v --tb=short
+
+# 5. Stop container
+docker compose down
+```
+
+### Docker Storage & Security Architecture
+- **Non-Root Execution:** Runs under `appuser` (UID 1000).
+- **Persistent Database:** SQLite database persisted in named volume `reliattend_data` (`/app/data/reliattend.db`).
+- **Persistent Biometrics:** Reference images persisted in named volume `reliattend_storage` (`/app/storage/reference_images/`).
+- **Model Mount:** Pretrained ONNX weights (YuNet & SFace) mounted as **read-only bind mount** (`./backend/models:/app/models:ro`), keeping image sizes minimal and avoiding model duplication.
+
