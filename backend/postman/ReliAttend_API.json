@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a90b4bf0-51a1-432d-947b-7b3b9b9921f0",
     "name": "ReliAttend AI Backend API",
-    "description": "Comprehensive Postman collection for testing the ReliAttend AI backend phase by phase.",
+    "description": "Comprehensive Postman collection for testing ReliAttend AI backend phase by phase.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -14,6 +14,16 @@
     {
       "key": "api_v1",
       "value": "http://127.0.0.1:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
       "type": "string"
     }
   ],
@@ -94,7 +104,291 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "01 - Authentication",
+      "description": "User login, profile verification, token refresh, and logout endpoints.",
+      "item": [
+        {
+          "name": "1. Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Authentication successful\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.user.role).to.eql(\"admin\");",
+                  "});",
+                  "if (jsonData.data && jsonData.data.tokens) {",
+                  "    pm.collectionVariables.set(\"access_token\", jsonData.data.tokens.access_token);",
+                  "    pm.collectionVariables.set(\"refresh_token\", jsonData.data.tokens.refresh_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username_or_email\": \"admin@reliattend.com\",\n  \"password\": \"AdminPassword@123\"\n}"
+            },
+            "url": {
+              "raw": "{{api_v1}}/auth/login",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate default Admin account and automatically store tokens in collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login (Faculty)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Faculty login successful\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.user.role).to.eql(\"faculty\");",
+                  "});",
+                  "if (jsonData.data && jsonData.data.tokens) {",
+                  "    pm.collectionVariables.set(\"access_token\", jsonData.data.tokens.access_token);",
+                  "    pm.collectionVariables.set(\"refresh_token\", jsonData.data.tokens.refresh_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username_or_email\": \"dr_sharma\",\n  \"password\": \"FacultyPassword@123\"\n}"
+            },
+            "url": {
+              "raw": "{{api_v1}}/auth/login",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate default Faculty account and store tokens in collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login (Invalid Credentials - Negative Test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Expected error format\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username_or_email\": \"admin@reliattend.com\",\n  \"password\": \"WrongPassword999\"\n}"
+            },
+            "url": {
+              "raw": "{{api_v1}}/auth/login",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Ensure invalid password returns 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Current User (/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Profile data returned\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "    pm.expect(jsonData.data).to.have.property(\"email\");",
+                  "    pm.expect(jsonData.data).to.have.property(\"role\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/auth/me",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Retrieve current authenticated user's profile using Bearer access_token."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Refresh Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"New access token issued\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data).to.have.property(\"access_token\");",
+                  "});",
+                  "if (jsonData.data && jsonData.data.access_token) {",
+                  "    pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{api_v1}}/auth/refresh",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Request new access token using collection's refresh_token."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Logout confirmed\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{api_v1}}/auth/logout",
+              "host": [
+                "{{api_v1}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Send logout request with current Bearer token."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
-
