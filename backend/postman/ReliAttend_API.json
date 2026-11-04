@@ -784,6 +784,131 @@
           }
         }
       ]
+    },
+    {
+      "name": "Phase 7: Multi-Face Detection",
+      "item": [
+        {
+          "name": "13. Detect Faces in Classroom Group Frame",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response structure contains face count and detection metadata', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('face_count');",
+                  "    pm.expect(jsonData.data).to.have.property('frame_metadata');",
+                  "    pm.expect(jsonData.data).to.have.property('faces');",
+                  "    pm.expect(jsonData.data.frame_metadata).to.have.property('width');",
+                  "    pm.expect(jsonData.data.frame_metadata).to.have.property('height');",
+                  "    pm.expect(jsonData.data.frame_metadata).to.have.property('inference_time_ms');",
+                  "});",
+                  "pm.test('Verify landmarks and quality metrics on detected faces', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.face_count > 0) {",
+                  "        var firstFace = jsonData.data.faces[0];",
+                  "        pm.expect(firstFace).to.have.property('bounding_box');",
+                  "        pm.expect(firstFace).to.have.property('confidence');",
+                  "        pm.expect(firstFace).to.have.property('landmarks');",
+                  "        pm.expect(firstFace).to.have.property('quality');",
+                  "        pm.expect(firstFace.landmarks).to.have.property('right_eye');",
+                  "        pm.expect(firstFace.landmarks).to.have.property('left_eye');",
+                  "        pm.expect(firstFace.landmarks).to.have.property('nose_tip');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Classroom group frame image (JPEG or PNG, max 5 MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/detection/detect-faces?confidence_threshold=0.60",
+              "host": ["{{api_v1}}"],
+              "path": ["detection", "detect-faces"],
+              "query": [
+                {
+                  "key": "confidence_threshold",
+                  "value": "0.60",
+                  "description": "Optional YuNet detector score threshold (0.01 to 1.0)"
+                },
+                {
+                  "key": "nms_threshold",
+                  "value": "0.30",
+                  "description": "Optional NMS overlap threshold (0.01 to 1.0)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Detects zero, one, two, or multiple human faces in a single classroom frame. Returns bounding boxes in absolute pixels, 5-point facial landmarks, detector confidence, and quality metrics."
+          }
+        },
+        {
+          "name": "14. Detect Faces (Empty Frame - Zero Faces 200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK for empty frame', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Zero faces detected returns empty array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.face_count).to.eql(0);",
+                  "    pm.expect(jsonData.data.faces).to.be.an('array').that.is.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Empty image containing no human faces (e.g., whiteboard, empty room)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/detection/detect-faces",
+              "host": ["{{api_v1}}"],
+              "path": ["detection", "detect-faces"]
+            },
+            "description": "Demonstrates that a frame with zero human faces returns a valid HTTP 200 OK response with an empty faces array, not an error."
+          }
+        }
+      ]
     }
   ]
 }

@@ -3,6 +3,7 @@ ReliAttend AI — Application Configuration
 Loads environment variables using Pydantic Settings.
 """
 
+import os
 from functools import lru_cache
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,8 +43,14 @@ class Settings(BaseSettings):
     # Note: Quality thresholds are initial experimental defaults, fully configurable
     BIOMETRIC_MAX_UPLOAD_BYTES: int = 5 * 1024 * 1024  # 5 MB limit
     BIOMETRIC_ALLOWED_MIME_TYPES: List[str] = ["image/jpeg", "image/png"]
-    BIOMETRIC_MODELS_DIR: str = "./backend/models"
-    BIOMETRIC_STORAGE_DIR: str = "./storage/reference_images"
+    BIOMETRIC_MODELS_DIR: str = os.getenv(
+        "BIOMETRIC_MODELS_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
+    )
+    BIOMETRIC_STORAGE_DIR: str = os.getenv(
+        "BIOMETRIC_STORAGE_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "storage", "reference_images")
+    )
     BIOMETRIC_YUNET_CONFIDENCE_THRESHOLD: float = 0.85
     BIOMETRIC_MIN_FACE_WIDTH: int = 80
     BIOMETRIC_MIN_FACE_HEIGHT: int = 80
@@ -65,6 +72,14 @@ class Settings(BaseSettings):
     # Experimental similarity threshold for SFace multi-reference cosine matching
     # (Treated as experimental; not a finalized or hardcoded production threshold)
     BIOMETRIC_EXPERIMENTAL_MATCH_THRESHOLD: float = 0.65
+
+    # Multi-Face Group Frame Detection Settings (Phase 7)
+    DETECTION_DEFAULT_CONFIDENCE_THRESHOLD: float = 0.60
+    DETECTION_DEFAULT_NMS_THRESHOLD: float = 0.30
+    DETECTION_MAX_FACES_PER_FRAME: int = 150  # Upper bound safety cap for dense classroom groups
+    DETECTION_MAX_FRAME_WIDTH: int = 4096     # 4K max dimension safety limit
+    DETECTION_MAX_FRAME_HEIGHT: int = 4096    # 4K max dimension safety limit
+    DETECTION_INFERENCE_MAX_DIMENSION: int = 1920  # Max dimension for detector scaling (retains aspect ratio)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -54,6 +54,16 @@ ReliAttend AI is a Confidence-Aware Multi-Face Recognition and Reliability-Based
 
 ---
 
+### 3.5 Multi-Face Detection Subsystem (Phase 7)
+- **Capability:** Ingests unconstrained classroom group photos or camera frames and detects zero, one, two, or multiple human faces simultaneously using OpenCV YuNet.
+- **Zero-Disk Persistence:** Uploaded classroom frames are processed strictly in-memory (`io.BytesIO`) and discarded immediately after inference. No classroom images are saved to storage or database.
+- **Coordinate Space:** Returns bounding boxes `[x, y, width, height]` and 5-point facial landmarks (`right_eye`, `left_eye`, `nose_tip`, `mouth_right`, `mouth_left`) in **absolute pixels relative to the original input frame**.
+- **Aspect-Ratio Preserving Inference:** Large frames (e.g. 4K) are scaled safely for detector inference and mapped back to the original frame coordinate system with zero coordinate distortion.
+- **Independence of Quality & Detection:** Detection confidence from YuNet is reported separately from image quality metrics (Laplacian blur, brightness, resolution). Faces with poor lighting or blur are still detected, with quality indicators clearly flagged.
+- **Boundary of Phase 7:** This capability **only detects faces**. It does not perform face recognition, student identification, candidate tracking, or attendance logging.
+
+---
+
 ## 4. Docker Containerisation Architecture
 - **Base Image:** `python:3.13-slim-bookworm` (Official Debian minimal).
 - **Runtimes:** `libglib2.0-0`, `libgomp1` (required by OpenCV headless) and `curl` (container healthcheck).

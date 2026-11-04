@@ -102,10 +102,23 @@ When matching a live camera face $v_{\text{live}}$ against a student's $K$ refer
 | `DELETE` | `/api/v1/biometrics/students/{student_id}/references/{ref_id}` | **Delete Reference** (Promotes new primary, unlinks file) | Admin / Assigned Faculty |
 | `POST` | `/api/v1/biometrics/students/{student_id}/register-face` | Register primary frontal reference (Backward-compatible) | Admin / Assigned Faculty |
 | `GET` | `/api/v1/biometrics/students/{student_id}/status` | Get biometric enrollment status & active pose list | Admin / Assigned Faculty |
+| `POST` | `/api/v1/detection/detect-faces` | **Multi-Face Detection in Classroom Frames** | Admin / Faculty |
 
 ---
 
-## 4. Local Real-Photo Testing Guide (Zero Git Leaks)
+## 4. Multi-Face Group Frame Detection (Phase 7)
+
+### 4.1 Architecture & Capabilities
+- **Capability:** Ingests unconstrained classroom group photos or camera frames and detects zero, one, two, or multiple human faces simultaneously using OpenCV YuNet.
+- **Zero-Disk Persistence:** Uploaded classroom frames are processed strictly in-memory (`io.BytesIO`) and discarded immediately after inference. No classroom images are saved to storage or database.
+- **Coordinate Space:** Returns bounding boxes `[x, y, width, height]` and 5-point facial landmarks (`right_eye`, `left_eye`, `nose_tip`, `mouth_right`, `mouth_left`) in **absolute pixels relative to the original input frame**.
+- **Aspect-Ratio Preserving Inference:** Large frames (e.g. 4K) are scaled safely for detector inference and mapped back to the original frame coordinate system with zero coordinate distortion.
+- **Independence of Quality & Detection:** Detection confidence from YuNet is reported separately from image quality metrics (Laplacian blur, brightness, resolution). Faces with poor lighting or blur are still detected, with quality indicators clearly flagged.
+- **Boundary of Phase 7:** This capability **only detects faces**. It does not perform face recognition, student identification, candidate tracking, or attendance logging.
+
+---
+
+## 5. Local Real-Photo Testing Guide (Zero Git Leaks)
 
 You can test the multi-reference system on your own computer with your own face without uploading any photos to GitHub or external servers.
 
@@ -142,12 +155,12 @@ Take 3 to 5 clear photos of yourself on your laptop webcam:
 
 ---
 
-## 5. Running Automated Tests
+## 6. Running Automated Tests
 
 ```bash
 # Activate virtual environment
 .\backend\venv\Scripts\Activate.ps1
 
-# Run complete pytest test suite (58 tests)
+# Run complete pytest test suite (69 tests across 9 modules)
 pytest -v --tb=short
 ```

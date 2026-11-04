@@ -5,9 +5,10 @@ Uses OpenCV YuNet ONNX model for face detection and landmark localization.
 Performs face-region blur and brightness quality checks with configurable thresholds.
 """
 
-from dataclasses import dataclass
-from typing import Optional, Tuple
 import os
+import threading
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 import cv2
 import numpy as np
 
@@ -26,6 +27,7 @@ class QualityMetrics:
 
 @dataclass
 class FaceDetectionResult:
+    """Enrollment-specific single-face result (Phase 6)."""
     face_count: int
     is_valid: bool
     error_message: Optional[str] = None
@@ -34,9 +36,34 @@ class FaceDetectionResult:
     quality_metrics: Optional[QualityMetrics] = None
 
 
+@dataclass
+class DetectedFaceBox:
+    """Individual face detection in a multi-face frame (Phase 7)."""
+    face_id: int
+    bounding_box: Tuple[int, int, int, int]  # (x, y, width, height) in original frame pixels
+    confidence: float
+    landmarks: Dict[str, Tuple[int, int]]  # 5 landmarks in original frame pixels: right_eye, left_eye, nose_tip, mouth_right, mouth_left
+    quality: QualityMetrics
+    is_quality_acceptable: bool
+
+
+@dataclass
+class MultiFaceDetectionResult:
+    """Overall multi-face detection response for an input frame (Phase 7)."""
+    face_count: int
+    faces: List[DetectedFaceBox]
+    frame_width: int
+    frame_height: int
+    inference_time_ms: float
+    is_scaled: bool = False
+    scale_factor: float = 1.0
+
+
 class FaceDetector:
     """
     OpenCV YuNet face detector wrapper with configurable quality verification.
+    Thread-safe implementation supporting single-reference validation (Phase 6)
+    and multi-face detection in group frames (Phase 7).
     """
 
     def __init__(
@@ -61,6 +88,7 @@ class FaceDetector:
         self.blur_threshold = blur_threshold
         self.min_brightness = min_brightness
         self.max_brightness = max_brightness
+        self._lock = threading.Lock()
 
         # Default initialization input size (will be updated dynamically per image)
         self.detector = cv2.FaceDetectorYN.create(
@@ -152,6 +180,7 @@ class FaceDetector:
     def detect_and_validate(self, image_bgr: np.ndarray) -> FaceDetectionResult:
         """
         Detect faces in image, enforce exactly-one-face constraint, and evaluate quality.
+        Preserved for Phase 6 enrollment backward compatibility.
         """
         if image_bgr is None or image_bgr.size == 0:
             return FaceDetectionResult(
@@ -160,10 +189,12 @@ class FaceDetector:
                 error_message="Invalid or empty image provided.",
             )
 
-        img_h, img_w = image_bgr.shape[:2]
-        self.detector.setInputSize((img_w, img_h))
-
-        _, faces = self.detector.detect(image_bgr)
+        with self._lock:
+            img_h, img_w = image_bgr.shape[:2]
+            self.detector.setInputSize((img_w, img_h))
+            self.detector.setScoreThreshold(self.confidence_threshold)
+            self.detector.setNMSThreshold(self.nms_threshold)
+            _, faces = self.detector.detect(image_bgr)
 
         # If no faces found
         if faces is None or len(faces) == 0:
@@ -242,5 +273,144 @@ class FaceDetector:
             face_bbox=(x, y, w, h),
             face_data=face,
             quality_metrics=quality,
+        )
+
+    def detect_multi_faces(
+        self,
+        image_bgr: np.ndarray,
+        score_threshold: Optional[float] = None,
+        nms_threshold: Optional[float] = None,
+        max_faces: int = 150,
+        max_inference_dimension: int = 1920,
+    ) -> MultiFaceDetectionResult:
+        """
+        Detect zero, one, two, or multiple faces in an image/frame (Phase 7).
+        Thread-safe, transforms coordinates back to original frame space if scaled,
+        and evaluates per-face landmarks and quality metrics.
+        """
+        import time
+        start_time = time.perf_counter()
+
+        if image_bgr is None or image_bgr.size == 0:
+            return MultiFaceDetectionResult(
+                face_count=0,
+                faces=[],
+                frame_width=0,
+                frame_height=0,
+                inference_time_ms=0.0,
+            )
+
+        orig_h, orig_w = image_bgr.shape[:2]
+        effective_score_thresh = score_threshold if score_threshold is not None else self.confidence_threshold
+        effective_nms_thresh = nms_threshold if nms_threshold is not None else self.nms_threshold
+
+        # Aspect-ratio preserving downscale if image exceeds max inference dimension
+        scale_factor = 1.0
+        is_scaled = False
+        det_img = image_bgr
+
+        max_dim = max(orig_w, orig_h)
+        if max_dim > max_inference_dimension and max_inference_dimension > 0:
+            scale_factor = max_inference_dimension / float(max_dim)
+            new_w = max(1, int(orig_w * scale_factor))
+            new_h = max(1, int(orig_h * scale_factor))
+            det_img = cv2.resize(image_bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            is_scaled = True
+
+        infer_h, infer_w = det_img.shape[:2]
+
+        with self._lock:
+            self.detector.setInputSize((infer_w, infer_h))
+            self.detector.setScoreThreshold(effective_score_thresh)
+            self.detector.setNMSThreshold(effective_nms_thresh)
+            _, raw_faces = self.detector.detect(det_img)
+
+        inference_time_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+
+        if raw_faces is None or len(raw_faces) == 0:
+            return MultiFaceDetectionResult(
+                face_count=0,
+                faces=[],
+                frame_width=orig_w,
+                frame_height=orig_h,
+                inference_time_ms=inference_time_ms,
+                is_scaled=is_scaled,
+                scale_factor=round(scale_factor, 4),
+            )
+
+        detected_boxes: List[DetectedFaceBox] = []
+        inv_scale = 1.0 / scale_factor if is_scaled else 1.0
+
+        # Sort raw detections by confidence descending and limit by max_faces safety cap
+        sorted_faces = sorted(raw_faces, key=lambda f: float(f[-1]), reverse=True)[:max_faces]
+
+        for idx, face in enumerate(sorted_faces, start=1):
+            conf = round(float(face[-1]), 4)
+
+            # Map coordinates back to original frame space
+            if is_scaled:
+                x = int(round(float(face[0]) * inv_scale))
+                y = int(round(float(face[1]) * inv_scale))
+                w = int(round(float(face[2]) * inv_scale))
+                h = int(round(float(face[3]) * inv_scale))
+                re_x, re_y = int(round(float(face[4]) * inv_scale)), int(round(float(face[5]) * inv_scale))
+                le_x, le_y = int(round(float(face[6]) * inv_scale)), int(round(float(face[7]) * inv_scale))
+                nt_x, nt_y = int(round(float(face[8]) * inv_scale)), int(round(float(face[9]) * inv_scale))
+                rcm_x, rcm_y = int(round(float(face[10]) * inv_scale)), int(round(float(face[11]) * inv_scale))
+                lcm_x, lcm_y = int(round(float(face[12]) * inv_scale)), int(round(float(face[13]) * inv_scale))
+            else:
+                x = int(face[0])
+                y = int(face[1])
+                w = int(face[2])
+                h = int(face[3])
+                re_x, re_y = int(face[4]), int(face[5])
+                le_x, le_y = int(face[6]), int(face[7])
+                nt_x, nt_y = int(face[8]), int(face[9])
+                rcm_x, rcm_y = int(face[10]), int(face[11])
+                lcm_x, lcm_y = int(face[12]), int(face[13])
+
+            # Clip bbox to original image boundaries safely
+            x_clipped = max(0, min(x, orig_w - 1))
+            y_clipped = max(0, min(y, orig_h - 1))
+            w_clipped = max(1, min(w, orig_w - x_clipped))
+            h_clipped = max(1, min(h, orig_h - y_clipped))
+
+            # Compute quality metrics on original frame's crop
+            quality = self.compute_quality_metrics(
+                image_bgr, x_clipped, y_clipped, w_clipped, h_clipped, conf
+            )
+            is_qual_ok = (
+                quality.is_blur_acceptable
+                and quality.is_brightness_acceptable
+                and quality.is_resolution_acceptable
+            )
+
+            landmarks = {
+                "right_eye": (re_x, re_y),
+                "left_eye": (le_x, le_y),
+                "nose_tip": (nt_x, nt_y),
+                "mouth_right": (rcm_x, rcm_y),
+                "mouth_left": (lcm_x, lcm_y),
+            }
+
+            detected_boxes.append(
+                DetectedFaceBox(
+                    face_id=idx,
+                    bounding_box=(x, y, w, h),
+                    confidence=conf,
+                    landmarks=landmarks,
+                    quality=quality,
+                    is_quality_acceptable=is_qual_ok,
+                )
+            )
+
+        return MultiFaceDetectionResult(
+            face_count=len(detected_boxes),
+            faces=detected_boxes,
+            frame_width=orig_w,
+            frame_height=orig_h,
+            inference_time_ms=inference_time_ms,
+            is_scaled=is_scaled,
+            scale_factor=round(scale_factor, 4),
         )
 
