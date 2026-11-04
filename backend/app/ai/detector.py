@@ -38,13 +38,14 @@ class FaceDetectionResult:
 
 @dataclass
 class DetectedFaceBox:
-    """Individual face detection in a multi-face frame (Phase 7)."""
+    """Individual face detection in a multi-face frame (Phase 7 & 8)."""
     face_id: int
     bounding_box: Tuple[int, int, int, int]  # (x, y, width, height) in original frame pixels
     confidence: float
     landmarks: Dict[str, Tuple[int, int]]  # 5 landmarks in original frame pixels: right_eye, left_eye, nose_tip, mouth_right, mouth_left
     quality: QualityMetrics
     is_quality_acceptable: bool
+    face_data: Optional[np.ndarray] = None  # Full 15-element raw row for landmark alignment in Phase 8
 
 
 @dataclass
@@ -393,6 +394,17 @@ class FaceDetector:
                 "mouth_left": (lcm_x, lcm_y),
             }
 
+            # In scaled mode, also create an unscaled face_data row for recognition alignment
+            if is_scaled:
+                orig_face_data = np.array([
+                    x, y, w, h,
+                    re_x, re_y, le_x, le_y, nt_x, nt_y,
+                    rcm_x, rcm_y, lcm_x, lcm_y,
+                    conf
+                ], dtype=np.float32)
+            else:
+                orig_face_data = face.copy()
+
             detected_boxes.append(
                 DetectedFaceBox(
                     face_id=idx,
@@ -401,6 +413,7 @@ class FaceDetector:
                     landmarks=landmarks,
                     quality=quality,
                     is_quality_acceptable=is_qual_ok,
+                    face_data=orig_face_data,
                 )
             )
 

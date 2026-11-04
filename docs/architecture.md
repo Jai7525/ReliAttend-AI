@@ -64,6 +64,19 @@ ReliAttend AI is a Confidence-Aware Multi-Face Recognition and Reliability-Based
 
 ---
 
+### 3.6 Multi-Face Recognition & 1:N Feature Matching Subsystem (Phase 8)
+- **Scoped 1:N Matrix Matching:**live face embeddings extracted via SFace (128-d float32 L2-normalized) are evaluated against active reference embeddings in the section gallery via BLAS matrix multiplication: $S = V_{\text{live}} \cdot G^T$.
+- **Multi-Reference Max-Pooling:** Match score per enrolled student is the highest similarity across their enrolled poses: $S_i = \max_k (v_{\text{live}} \cdot r_{i,k})$.
+- **Experimental Calibration Defaults:** Match threshold: `0.65`; Ambiguity margin: `0.05` between top-1 and top-2 candidates (subject to empirical calibration).
+- **Ambiguity & Duplicate Conflict Handling:**
+  - Ambiguous collision ($S_{\text{top1}} - S_{\text{top2}} < 0.05$) flags the assignment as `uncertain`.
+  - Multiple faces matching the same student in a single frame are flagged as `uncertain`.
+- **Consent & Scoping Enforcement:** Students without active DPDP consent (`ConsentRecord.is_active=True`) or without active face references are strictly excluded from the gallery. Access is strictly scoped to Admin or assigned Faculty.
+- **Reporting Metrics:** `faces_recognized` strictly counts faces with status `matched`. Uncertain results are counted separately.
+- **Limitations:** Multi-reference max-pooling increases gallery size and can modestly elevate false acceptance probability across large galleries. Phase 8 establishes candidate identity proposals; it does not record final attendance or perform anti-spoofing.
+
+---
+
 ## 4. Docker Containerisation Architecture
 - **Base Image:** `python:3.13-slim-bookworm` (Official Debian minimal).
 - **Runtimes:** `libglib2.0-0`, `libgomp1` (required by OpenCV headless) and `curl` (container healthcheck).

@@ -81,6 +81,13 @@ class Settings(BaseSettings):
     DETECTION_MAX_FRAME_HEIGHT: int = 4096    # 4K max dimension safety limit
     DETECTION_INFERENCE_MAX_DIMENSION: int = 1920  # Max dimension for detector scaling (retains aspect ratio)
 
+    # Multi-Face Recognition & 1:N Matching Settings (Phase 8)
+    # Note: Thresholds are initial experimental defaults and subject to empirical calibration
+    RECOGNITION_EXPERIMENTAL_MATCH_THRESHOLD: float = 0.65
+    RECOGNITION_EXPERIMENTAL_AMBIGUITY_MARGIN: float = 0.05
+    RECOGNITION_TOP_K: int = 3
+    RECOGNITION_ALLOW_DUPLICATE_ASSIGNMENTS: bool = False  # Flags multiple faces matching same student as uncertain
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

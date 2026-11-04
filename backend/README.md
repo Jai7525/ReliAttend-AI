@@ -103,10 +103,28 @@ When matching a live camera face $v_{\text{live}}$ against a student's $K$ refer
 | `POST` | `/api/v1/biometrics/students/{student_id}/register-face` | Register primary frontal reference (Backward-compatible) | Admin / Assigned Faculty |
 | `GET` | `/api/v1/biometrics/students/{student_id}/status` | Get biometric enrollment status & active pose list | Admin / Assigned Faculty |
 | `POST` | `/api/v1/detection/detect-faces` | **Multi-Face Detection in Classroom Frames** | Admin / Faculty |
+| `POST` | `/api/v1/recognition/sections/{class_section_id}/recognize-frame` | **1:N Multi-Face Recognition & Matching** | Admin / Assigned Faculty |
 
 ---
 
-## 4. Multi-Face Group Frame Detection (Phase 7)
+## 4. Multi-Face Recognition & 1:N Feature Matching (Phase 8)
+
+### 4.1 Architecture & Decision Engine
+- **1:N Scoped Gallery Matching:** Detected face crops are aligned and embedded via OpenCV SFace (128-d L2-normalized float32 vectors) and matched against the target class section gallery in $O(1)$ batch matrix operations.
+- **Multi-Reference Max-Pooling:** Each student candidate is evaluated across all active reference poses ($K \in [1, 5]$). The representative similarity score is the maximum similarity across poses: $S_i = \max_k (v_{\text{live}} \cdot r_{i,k})$.
+- **Experimental Thresholds (Configurable):** 
+  - Match threshold: `0.65` (configurable default; treated as experimental pending campus calibration).
+  - Ambiguity margin: `0.05` (configurable default between top-1 and top-2 candidates).
+- **Ambiguity & Duplicate Conflict Handling:**
+  - Ambiguous collision ($S_{\text{top1}} - S_{\text{top2}} < 0.05$) flags the face as `uncertain`.
+  - Multiple detected faces in the same frame claiming the same student identity are automatically flagged as `uncertain`.
+- **Separated Counting Metrics:** `faces_recognized` strictly counts faces with status `matched`. Uncertain and unrecognized faces are reported separately (`faces_uncertain`, `faces_unrecognized`).
+- **Privacy by Design:** Zero filesystem persistence of classroom frames. Zero raw embeddings or storage paths exposed in API outputs or logs.
+- **Known Limitations:** As gallery reference count grows, maximum-similarity aggregation across multiple poses can increase false match probability. Recognition establishes candidate visual similarity, not final legal attendance.
+
+---
+
+## 5. Multi-Face Group Frame Detection (Phase 7)
 
 ### 4.1 Architecture & Capabilities
 - **Capability:** Ingests unconstrained classroom group photos or camera frames and detects zero, one, two, or multiple human faces simultaneously using OpenCV YuNet.
@@ -118,7 +136,7 @@ When matching a live camera face $v_{\text{live}}$ against a student's $K$ refer
 
 ---
 
-## 5. Local Real-Photo Testing Guide (Zero Git Leaks)
+## 7. Local Real-Photo Testing Guide (Zero Git Leaks)
 
 You can test the multi-reference system on your own computer with your own face without uploading any photos to GitHub or external servers.
 
@@ -155,12 +173,12 @@ Take 3 to 5 clear photos of yourself on your laptop webcam:
 
 ---
 
-## 6. Running Automated Tests
+## 8. Running Automated Tests
 
 ```bash
 # Activate virtual environment
 .\backend\venv\Scripts\Activate.ps1
 
-# Run complete pytest test suite (69 tests across 9 modules)
+# Run complete pytest test suite (78 tests across 10 modules)
 pytest -v --tb=short
 ```

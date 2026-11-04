@@ -909,6 +909,85 @@
           }
         }
       ]
+    },
+    {
+      "name": "Phase 8: Multi-Face Recognition",
+      "item": [
+        {
+          "name": "15. Recognize Classroom Frame (1:N Section Matching)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response includes recognition summary and separated counts', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('summary');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('faces_detected');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('faces_recognized');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('faces_uncertain');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('faces_unrecognized');",
+                  "});",
+                  "pm.test('Faces list contains match statuses without raw embedding leaks', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.faces.length > 0) {",
+                  "        var f = jsonData.data.faces[0];",
+                  "        pm.expect(f).to.have.property('match_status');",
+                  "        pm.expect(f).to.have.property('top_candidates');",
+                  "        pm.expect(f).to.have.property('margin_to_second');",
+                  "        pm.expect(f).to.not.have.property('embedding');",
+                  "        pm.expect(f).to.not.have.property('image_path');",
+                  "        if (jsonData.data.summary.gallery_students_count < 2) {",
+                  "            pm.expect(f.margin_to_second).to.be.null;",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Classroom group frame (JPEG or PNG, max 5 MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_v1}}/recognition/sections/{{class_id}}/recognize-frame?similarity_threshold=0.65&ambiguity_margin=0.05",
+              "host": ["{{api_v1}}"],
+              "path": ["recognition", "sections", "{{class_id}}", "recognize-frame"],
+              "query": [
+                {
+                  "key": "similarity_threshold",
+                  "value": "0.65",
+                  "description": "Experimental cosine similarity threshold"
+                },
+                {
+                  "key": "ambiguity_margin",
+                  "value": "0.05",
+                  "description": "Experimental ambiguity margin between top-1 and top-2 candidates"
+                }
+              ]
+            },
+            "description": "Performs 1:N multi-face recognition for all faces in a classroom frame against the section gallery. Flags duplicate identities and ambiguous collisions as uncertain."
+          }
+        }
+      ]
     }
   ]
 }
