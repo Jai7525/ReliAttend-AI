@@ -3,7 +3,7 @@ ReliAttend AI — Student Business Logic Service
 Handles student creation, validation, unique constraints, and biometric consent logging.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import (
@@ -97,6 +97,18 @@ class StudentService:
 
         db.commit()
         db.refresh(student)
+
+        # Invalidate active tracking sessions if section changed or student deactivated
+        if "class_section_id" in update_dict or ("is_active" in update_dict and not student.is_active):
+            try:
+                from app.services.tracking_service import session_manager
+                session_manager.invalidate_student_references(
+                    student_id=student.id,
+                    student_str_id=student.student_id,
+                )
+            except Exception:
+                pass
+
         return student
 
     @staticmethod
@@ -107,7 +119,62 @@ class StudentService:
         student.registration_status = "deactivated"
         db.commit()
         db.refresh(student)
+
+        # Invalidate active tracking sessions
+        try:
+            from app.services.tracking_service import session_manager
+            session_manager.invalidate_student_references(
+                student_id=student.id,
+                student_str_id=student.student_id,
+            )
+        except Exception:
+            pass
+
         return student
+
+    @staticmethod
+    def revoke_consent(db: Session, student_id: int) -> Tuple[ConsentRecord, bool]:
+        """
+        Revoke biometric consent (DPDP compliance).
+        Invalidates active tracking session galleries immediately.
+        Fail-safe policy: if invalidation fails, disables recognition in affected sessions.
+        Returns (ConsentRecord, invalidation_success: bool).
+        """
+        student = StudentService.get_student(db, student_id)
+        consent = db.query(ConsentRecord).filter_by(student_id=student.id).first()
+        if not consent:
+            raise ResourceNotFoundError(f"Consent record for student ID {student_id} not found.")
+
+        consent.is_active = False
+        db.commit()
+        db.refresh(consent)
+
+        invalidation_success = True
+        try:
+            from app.services.tracking_service import session_manager
+            session_manager.invalidate_student_references(
+                student_id=student.id,
+                student_str_id=student.student_id,
+                class_section_id=student.class_section_id,
+            )
+        except Exception as exc:
+            invalidation_success = False
+            import logging
+            logging.getLogger("reliattend.student").error(
+                "Granular session invalidation failed after consent revocation for student %s: %s. Engaging fail-safe shutdown of recognition in section.",
+                student.student_id,
+                str(exc),
+            )
+            try:
+                from app.services.tracking_service import session_manager
+                session_manager.mark_sessions_unavailable_for_section(student.class_section_id)
+            except Exception as fs_exc:
+                logging.getLogger("reliattend.student").critical(
+                    "Fail-safe session shutdown also encountered error: %s",
+                    str(fs_exc),
+                )
+
+        return consent, invalidation_success
 
     @staticmethod
     def record_consent(

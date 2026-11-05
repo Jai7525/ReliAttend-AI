@@ -139,3 +139,26 @@ async def record_biometric_consent(
         "data": ConsentRecordResponse.model_validate(consent).model_dump(),
     }
 
+
+@router.delete(
+    "/{student_id}/consent",
+    summary="Revoke Biometric Consent",
+    description="Revoke institutional consent for student biometric processing (DPDP Act compliance). Inactive consent excludes student from recognition and purges active session gallery cache.",
+)
+async def revoke_biometric_consent(
+    student_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin),
+) -> Dict[str, Any]:
+    consent, invalidation_success = StudentService.revoke_consent(db, student_id)
+    msg = "Biometric consent revoked successfully"
+    if not invalidation_success:
+        msg += " (warning: active session entered fail-safe recognition disabled state)"
+    return {
+        "success": True,
+        "message": msg,
+        "session_invalidation_successful": invalidation_success,
+        "data": ConsentRecordResponse.model_validate(consent).model_dump(),
+    }
+
+

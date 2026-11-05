@@ -467,6 +467,18 @@ class BiometricService:
                 except OSError as exc:
                     logger.warning("Failed to remove deleted reference file '%s': %s", file_to_delete, exc)
 
+            # 5. Invalidate active tracking session galleries
+            try:
+                from app.services.tracking_service import session_manager
+                session_manager.invalidate_student_references(
+                    student_id=student.id,
+                    student_str_id=student.student_id,
+                    class_section_id=student.class_section_id,
+                    reference_id=reference_id,
+                )
+            except Exception as inv_exc:
+                logger.warning("Failed to invalidate tracking sessions after reference deletion: %s", inv_exc)
+
         except Exception as exc:
             self.db.rollback()
             raise exc

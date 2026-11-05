@@ -301,6 +301,25 @@ class AcademicService:
         return assignment
 
     @staticmethod
+    def revoke_faculty_assignment(db: Session, assignment_id: int) -> FacultyAssignment:
+        """Revokes an existing faculty assignment and terminates affected tracking sessions."""
+        assignment = db.query(FacultyAssignment).filter_by(id=assignment_id).first()
+        if not assignment:
+            raise ResourceNotFoundError(f"Faculty assignment ID {assignment_id} not found.")
+
+        assignment.is_active = False
+        db.commit()
+        db.refresh(assignment)
+
+        try:
+            from app.services.tracking_service import session_manager
+            session_manager.terminate_sessions_for_user(assignment.user_id)
+        except Exception:
+            pass
+
+        return assignment
+
+    @staticmethod
     def list_faculty_assigned_classes(db: Session, user_id: int) -> List[AssignedClassDetail]:
         """Retrieve assigned classes and subjects for faculty dashboard."""
         assignments = db.query(FacultyAssignment).filter_by(user_id=user_id, is_active=True).all()

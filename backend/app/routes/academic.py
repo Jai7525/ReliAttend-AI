@@ -260,6 +260,21 @@ async def assign_faculty(
     }
 
 
+@router.delete("/assignments/{assignment_id}", summary="Revoke Faculty Assignment")
+async def revoke_faculty_assignment(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin),
+) -> Dict[str, Any]:
+    """Admin revokes a faculty assignment, terminating any active tracking sessions for that faculty member."""
+    assignment = AcademicService.revoke_faculty_assignment(db, assignment_id)
+    return {
+        "success": True,
+        "message": "Faculty assignment revoked successfully",
+        "data": FacultyAssignmentResponse.model_validate(assignment).model_dump(),
+    }
+
+
 @router.get("/faculty/my-classes", summary="Get Current Faculty's Assigned Classes")
 async def get_my_assigned_classes(
     db: Session = Depends(get_db),
